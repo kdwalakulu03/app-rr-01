@@ -1,0 +1,24 @@
+version: '3.8'
+
+# DEV ONLY — just the database (backend/frontend run with pnpm dev)
+# Uses port 5847 to avoid clash with system postgres
+services:
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: nearnow4_dev_pg
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-nearnow4}
+    ports:
+      - "5847:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

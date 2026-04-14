@@ -1,0 +1,20 @@
+{
+  "name": "Roam Richer",
+  "short_name": "RoamRicher",
+  "description": "Collaborative spatial travel platform — 186,000+ places across 26 countries. Real-time autopilot guidance, transport networks, community-contributed gems.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#6366f1",
+  "lang": "en-US",
+  "orientation": "portrait-primary",
+  "categories": ["travel", "navigation", "lifestyle"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

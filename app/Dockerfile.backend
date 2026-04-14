@@ -1,0 +1,37 @@
+FROM node:20-slim AS builder
+
+WORKDIR /app
+RUN npm install -g pnpm
+
+# Copy workspace config
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY backend/package.json backend/tsconfig.json ./backend/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --filter backend
+
+# Copy source
+COPY backend/src ./backend/src
+
+# Build
+RUN pnpm --filter backend build
+
+# --- Production image ---
+FROM node:20-slim
+
+WORKDIR /app
+RUN npm install -g pnpm
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.json ./backend/
+
+RUN pnpm install --frozen-lockfile --filter backend --prod
+
+COPY --from=builder /app/backend/dist ./backend/dist
+# SQL migration files are not compiled — copy them directly
+COPY backend/src/db/migrations ./backend/dist/db/migrations
+
+ENV NODE_ENV=production
+EXPOSE 3847
+
+CMD ["node", "backend/dist/index.js"]
