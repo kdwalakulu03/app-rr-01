@@ -13,6 +13,7 @@
     "@turf/turf": "^7.3.4",
     "date-fns": "^3.3.1",
     "firebase": "^10.7.2",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^0.312.0",
     "maplibre-gl": "^5.21.1",
     "react": "^18.2.0",

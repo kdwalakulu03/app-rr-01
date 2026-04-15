@@ -17,28 +17,49 @@ async function migrate() {
   try {
     console.log('🚀 Starting database migration...\n');
 
-    // Read migration file
-    const migrationPath = path.join(__dirname, 'migrations/001_core_schema.sql');
-    const sql = fs.readFileSync(migrationPath, 'utf-8');
+    // Create migrations tracking table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS _migrations (
+        id SERIAL PRIMARY KEY,
+        filename VARCHAR(255) UNIQUE NOT NULL,
+        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
 
-    // Execute migration
-    await pool.query(sql);
+    // Get already-applied migrations
+    const applied = await pool.query('SELECT filename FROM _migrations ORDER BY filename');
+    const appliedSet = new Set(applied.rows.map((r: { filename: string }) => r.filename));
 
-    console.log('✅ Migration completed successfully!');
-    console.log('   - Created providers table (with Roam Richer Originals)');
-    console.log('   - Created places table');
-    console.log('   - Created experiences table');
-    console.log('   - Created route_templates table');
-    console.log('   - Created route_versions table');
-    console.log('   - Created route_days table');
-    console.log('   - Created route_activities table');
-    console.log('   - Created trips table');
-    console.log('   - Created trip_days table');
-    console.log('   - Created trip_activities table');
-    console.log('   - Created trip_logs table');
-    console.log('   - Created countries table');
-    console.log('   - Created reviews table');
-    console.log('   - Created triggers and functions');
+    // Discover and sort all migration files
+    const migrationsDir = path.join(__dirname, 'migrations');
+    const files = fs.readdirSync(migrationsDir)
+      .filter(f => f.endsWith('.sql'))
+      .sort();
+
+    console.log(`   Found ${files.length} migration files (${appliedSet.size} already applied)\n`);
+
+    let newCount = 0;
+    for (const file of files) {
+      if (appliedSet.has(file)) {
+        console.log(`   ⏭️  ${file} — already applied`);
+        continue;
+      }
+
+      const filePath = path.join(migrationsDir, file);
+      const sql = fs.readFileSync(filePath, 'utf-8');
+
+      console.log(`   ⏳ Running ${file}...`);
+      await pool.query(sql);
+      await pool.query('INSERT INTO _migrations (filename) VALUES ($1)', [file]);
+      console.log(`   ✅ ${file} — done`);
+      newCount++;
+    }
+
+    if (newCount === 0) {
+      console.log('\n✅ Database is up to date — no new migrations to apply.');
+    } else {
+      console.log(`\n✅ Applied ${newCount} new migration(s) successfully!`);
+    }
 
   } catch (error) {
     console.error('❌ Migration failed:', error);

@@ -13,8 +13,12 @@ import { autopilotRouter } from './routes/autopilot.js';
 import { countriesRouter } from './routes/countries.js';
 import { itineraryRouter } from './routes/itinerary.js';
 import { spatialRouter } from './routes/spatial.js';
+import { usersRouter } from './routes/users.js';
+import { mentorRouter, mentorPublicRouter } from './routes/mentor/index.js';
+import { exportRouter } from './routes/export.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/auth.js';
+import { ensureUser } from './middleware/ensureUser.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -32,11 +36,15 @@ app.use('/api/countries', countriesRouter);
 app.use('/api/places', placesRouter);
 app.use('/api/routes', routesRouter);
 app.use('/api/spatial', spatialRouter);  // GIS network — public reads
+app.use('/api/mentor/public', mentorPublicRouter);  // Published mentor routes — public reads
 
-// Protected routes (require auth)
-app.use('/api/trips', authMiddleware, tripsRouter);
-app.use('/api/autopilot', authMiddleware, autopilotRouter);
-app.use('/api/itinerary', authMiddleware, itineraryRouter);
+// Protected routes (require auth + ensure user exists in DB)
+app.use('/api/users', authMiddleware, ensureUser, usersRouter);
+app.use('/api/trips', authMiddleware, ensureUser, tripsRouter);
+app.use('/api/autopilot', authMiddleware, ensureUser, autopilotRouter);
+app.use('/api/itinerary', authMiddleware, ensureUser, itineraryRouter);
+app.use('/api/trips/export', authMiddleware, ensureUser, exportRouter);
+app.use('/api/mentor', authMiddleware, ensureUser, mentorRouter);
 
 // Error handler
 app.use(errorHandler);

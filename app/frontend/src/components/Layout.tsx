@@ -2,7 +2,8 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import {
   Home, Map, Compass, LogOut, Menu, X, Globe, Briefcase,
-  BarChart3, Route, Network, Settings, HelpCircle,
+  BarChart3, Route, Network, Settings, HelpCircle, MapPinned, PenTool,
+  Radio,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { ThemeToggle } from './ThemeToggle';
@@ -14,7 +15,7 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-  const { isProvider } = useMode();
+  const { isProvider, isMentor } = useMode();
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -43,7 +44,10 @@ export default function Layout() {
     { name: 'Explore', href: '/explore', icon: Globe },
     { name: 'Network', href: '/map', icon: Network },
     { name: 'Routes', href: '/routes', icon: Compass },
-    ...(user ? [{ name: 'My Trips', href: '/trips', icon: Map }] : []),
+    ...(user ? [
+      { name: 'My Trips', href: '/trips', icon: Map },
+      { name: 'Record', href: '/trips/record', icon: Radio },
+    ] : []),
   ];
 
   const providerNav = [
@@ -52,7 +56,18 @@ export default function Layout() {
     { name: 'Bookings', href: '/provider/bookings', icon: Briefcase },
   ];
 
-  const navigation = isProvider && user ? providerNav : travelerNav;
+  const mentorNav = [
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'My Routes', href: '/mentor', icon: MapPinned },
+    { name: 'Draw Route', href: '/mentor/canvas', icon: PenTool },
+    { name: 'Explore', href: '/explore', icon: Globe },
+  ];
+
+  const navigation = isMentor && user
+    ? mentorNav
+    : isProvider && user
+    ? providerNav
+    : travelerNav;
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';

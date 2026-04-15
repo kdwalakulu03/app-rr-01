@@ -1,13 +1,14 @@
-import { useState, createContext, useContext, ReactNode } from 'react';
-import { Compass, Briefcase, ChevronDown } from 'lucide-react';
+import { useState, createContext, useContext, ReactNode, useCallback } from 'react';
+import { Compass, Briefcase, MapPinned, ChevronDown } from 'lucide-react';
 
-type AppMode = 'traveler' | 'provider';
+type AppMode = 'traveler' | 'provider' | 'mentor';
 
 interface ModeContextType {
   mode: AppMode;
   setMode: (mode: AppMode) => void;
   isProvider: boolean;
   isTraveler: boolean;
+  isMentor: boolean;
 }
 
 const ModeContext = createContext<ModeContextType | null>(null);
@@ -16,13 +17,23 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<AppMode>(() => {
     // Check localStorage for saved preference
     const saved = localStorage.getItem('roamricher_mode');
-    return (saved as AppMode) || 'traveler';
+    if (saved === 'traveler' || saved === 'provider' || saved === 'mentor') return saved;
+    return 'traveler';
   });
 
-  const handleSetMode = (newMode: AppMode) => {
+  const handleSetMode = useCallback((newMode: AppMode) => {
     setMode(newMode);
     localStorage.setItem('roamricher_mode', newMode);
-  };
+    // Fire-and-forget server sync (don't block UI)
+    const token = localStorage.getItem('roamricher_token');
+    if (token) {
+      fetch('/api/users/switch-role', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role: newMode }),
+      }).catch(() => { /* silent */ });
+    }
+  }, []);
 
   return (
     <ModeContext.Provider
@@ -31,6 +42,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
         setMode: handleSetMode,
         isProvider: mode === 'provider',
         isTraveler: mode === 'traveler',
+        isMentor: mode === 'mentor',
       }}
     >
       {children}
@@ -61,9 +73,17 @@ export function ModeSwitcher() {
       bg: 'bg-primary-500/10',
     },
     {
+      value: 'mentor' as const,
+      label: 'Mentor',
+      description: 'Draw & share routes',
+      icon: MapPinned,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-500/10',
+    },
+    {
       value: 'provider' as const,
       label: 'Provider',
-      description: 'Create & manage routes',
+      description: 'Create & manage services',
       icon: Briefcase,
       color: 'text-primary-600',
       bg: 'bg-primary-500/10',

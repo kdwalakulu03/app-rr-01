@@ -9,6 +9,8 @@ declare global {
       user?: {
         uid: string;
         email?: string;
+        dbId?: number;
+        activeRole?: string;
       };
     }
   }

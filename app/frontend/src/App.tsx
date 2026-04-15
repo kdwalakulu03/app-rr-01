@@ -1,18 +1,19 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './providers/AuthProvider';
 import Layout from './components/Layout';
-import HomePage from './pages/HomePage';
-import RoutesPage from './pages/RoutesPage';
-import RouteDetailPage from './pages/RouteDetailPage';
-import TripsPage from './pages/TripsPage';
-import TripDetailPage from './pages/TripDetailPage';
-import CreateTripPage from './pages/CreateTripPage';
-import LoginPage from './pages/LoginPage';
-import SharedTripPage from './pages/SharedTripPage';
-import ExplorePage from './pages/ExplorePage';
-import TripMapPage from './pages/TripMapPage';
-import MapPage from './pages/MapPage';
+
+// Shared (public) pages
+import { HomePage, RoutesPage, RouteDetailPage, ExplorePage, MapPage } from './pages/shared';
+import { LoginPage } from './pages/shared';
+
+// Traveler pages
+import { TripsPage, CreateTripPage, TripDetailPage, TripMapPage, SharedTripPage, LiveRecord } from './pages/traveler';
+
+// Provider pages
 import { ProviderDashboard, ProviderRoutes, ProviderBookings, CreateRoute } from './pages/provider';
+
+// Mentor pages
+import { MentorCanvas, MentorDashboard, MentorRouteView } from './pages/mentor';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -74,14 +75,30 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="trips/record"
+          element={
+            <ProtectedRoute>
+              <LiveRecord />
+            </ProtectedRoute>
+          }
+        />
         {/* Provider routes */}
         <Route path="provider" element={<ProtectedRoute><ProviderDashboard /></ProtectedRoute>} />
         <Route path="provider/routes" element={<ProtectedRoute><ProviderRoutes /></ProtectedRoute>} />
         <Route path="provider/routes/new" element={<ProtectedRoute><CreateRoute /></ProtectedRoute>} />
         <Route path="provider/bookings" element={<ProtectedRoute><ProviderBookings /></ProtectedRoute>} />
+
+        {/* Mentor routes */}
+        <Route path="mentor" element={<ProtectedRoute><MentorDashboard /></ProtectedRoute>} />
+        <Route path="mentor/canvas" element={<ProtectedRoute><MentorCanvas /></ProtectedRoute>} />
+        <Route path="mentor/canvas/:id" element={<ProtectedRoute><MentorCanvas /></ProtectedRoute>} />
+        <Route path="mentor/routes/:id" element={<MentorRouteView />} />
       </Route>
       {/* Public shared trip page */}
       <Route path="/share/:token" element={<SharedTripPage />} />
     </Routes>
   );
 }
+
+
